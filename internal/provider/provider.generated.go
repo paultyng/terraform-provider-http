@@ -22,7 +22,11 @@ func (r *provider) PopulateConfig(conf cty.Value) error {
 	if v.IsNull() {
 		r.RequestHeaders = nil
 	} else {
-		r.RequestHeaders = nil
+		vm := v.AsValueMap()
+		r.RequestHeaders = make(map[string]string, len(vm))
+		for k, vmv := range vm {
+			r.RequestHeaders[k] = vmv.AsString()
+		}
 	}
 	return nil
 }
