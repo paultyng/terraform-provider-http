@@ -3,6 +3,7 @@
 package provider
 
 import (
+	"fmt"
 	terraformpluginsdk "github.com/hashicorp/terraform-plugin-sdk"
 	cty "github.com/zclconf/go-cty/cty"
 )
@@ -29,4 +30,20 @@ func (r *provider) PopulateConfig(conf cty.Value) error {
 		}
 	}
 	return nil
+}
+func (p *provider) DataSourceFactory(typeName string) terraformpluginsdk.DataSource {
+	switch typeName {
+	case "http":
+		return &dataHTTP{provider: p}
+	}
+	panic(fmt.Sprintf("datasource %s unexpected", typeName))
+}
+func (p *provider) DataSourceSchemas() map[string]terraformpluginsdk.Schema {
+	return map[string]terraformpluginsdk.Schema{"http": p.DataSourceFactory("http").Schema()}
+}
+func (p *provider) ResourceFactory(typeName string) terraformpluginsdk.Resource {
+	panic(fmt.Sprintf("resource %s unexpected", typeName))
+}
+func (p *provider) ResourceSchemas() map[string]terraformpluginsdk.Schema {
+	return map[string]terraformpluginsdk.Schema{}
 }

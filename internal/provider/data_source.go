@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 
+	sdk "github.com/hashicorp/terraform-plugin-sdk"
 	"github.com/pkg/errors"
 )
 
@@ -23,6 +24,7 @@ func (u urlAttribute) Validate() error {
 //go:generate tfplugingen -gen datasource -type dataHTTP
 type dataHTTP struct {
 	provider *provider
+	TFName   struct{} `tf:"http,datasource"`
 
 	URL            urlAttribute      `tf:"url,required"`
 	RequestHeaders map[string]string `tf:"request_headers,optional"`
@@ -96,4 +98,22 @@ func isContentTypeAllowed(contentType string) bool {
 	}
 
 	return false
+}
+
+// TODO: this could be generated...
+
+func (r *dataHTTP) Validate() ([]sdk.Diagnostic, error) {
+	diags := []sdk.Diagnostic{}
+	var err error
+
+	err = r.URL.Validate()
+	if err != nil {
+		diags = append(diags, sdk.Diagnostic{
+			Path:     sdk.Path(sdk.NameStep("url")),
+			Severity: sdk.SeverityError,
+			Summary:  err.Error(),
+		})
+	}
+
+	return diags, nil
 }
