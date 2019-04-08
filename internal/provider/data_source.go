@@ -43,7 +43,6 @@ func (d *dataHTTP) Read(ctx context.Context) error {
 	req = req.WithContext(ctx)
 
 	for n, v := range d.provider.RequestHeaders {
-		panic(fmt.Sprintf("%s: %s", n, v))
 		req.Header.Set(n, v)
 	}
 
