@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/plugintest"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform/states"
 )
 
 type TestHTTPMock struct {
@@ -35,15 +35,15 @@ func TestDataSource_http200(t *testing.T) {
 		Steps: []plugintest.TestStep{
 			{
 				Config: fmt.Sprintf(testDataSourceConfig_basic, testHTTPMock.server.URL, 200),
-				Check: func(s *terraform.State) error {
+				Check: func(s *states.State) error {
 					_, ok := s.RootModule().Resources["data.http.http_test"]
 					if !ok {
 						return fmt.Errorf("missing data resource")
 					}
 
-					outputs := s.RootModule().Outputs
+					outputs := s.RootModule().OutputValues
 
-					if outputs["body"].Value != "1.0.0" {
+					if outputs["body"].Value.AsString() != "1.0.0" {
 						return fmt.Errorf(
 							`'body' output is %s; want '1.0.0'`,
 							outputs["body"].Value,
@@ -83,7 +83,7 @@ data "http" "http_test" {
 }
 
 output "body" {
-  value = "${data.http.http_test.body}"
+  value = data.http.http_test.body
 }
 `
 
@@ -97,15 +97,15 @@ func TestDataSource_withHeaders200(t *testing.T) {
 		Steps: []plugintest.TestStep{
 			{
 				Config: fmt.Sprintf(testDataSourceConfig_withHeaders, testHTTPMock.server.URL, 200),
-				Check: func(s *terraform.State) error {
+				Check: func(s *states.State) error {
 					_, ok := s.RootModule().Resources["data.http.http_test"]
 					if !ok {
 						return fmt.Errorf("missing data resource")
 					}
 
-					outputs := s.RootModule().Outputs
+					outputs := s.RootModule().OutputValues
 
-					if outputs["body"].Value != "1.0.0" {
+					if outputs["body"].Value.AsString() != "1.0.0" {
 						return fmt.Errorf(
 							`'body' output is %s; want '1.0.0'`,
 							outputs["body"].Value,
@@ -125,7 +125,7 @@ data "http" "http_test" {
 }
 
 output "body" {
-  value = "${data.http.http_test.body}"
+  value = data.http.http_test.body
 }
 `
 
@@ -139,15 +139,15 @@ func TestDataSource_utf8(t *testing.T) {
 		Steps: []plugintest.TestStep{
 			{
 				Config: fmt.Sprintf(testDataSourceConfig_utf8, testHTTPMock.server.URL, 200),
-				Check: func(s *terraform.State) error {
+				Check: func(s *states.State) error {
 					_, ok := s.RootModule().Resources["data.http.http_test"]
 					if !ok {
 						return fmt.Errorf("missing data resource")
 					}
 
-					outputs := s.RootModule().Outputs
+					outputs := s.RootModule().OutputValues
 
-					if outputs["body"].Value != "1.0.0" {
+					if outputs["body"].Value.AsString() != "1.0.0" {
 						return fmt.Errorf(
 							`'body' output is %s; want '1.0.0'`,
 							outputs["body"].Value,
@@ -167,7 +167,7 @@ data "http" "http_test" {
 }
 
 output "body" {
-  value = "${data.http.http_test.body}"
+  value = data.http.http_test.body
 }
 `
 
