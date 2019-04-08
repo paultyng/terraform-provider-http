@@ -46,11 +46,5 @@ func (r *dataHTTP) PopulateConfig(conf cty.Value) error {
 			r.RequestHeaders[k] = vmv.AsString()
 		}
 	}
-	v = conf.GetAttr("body")
-	if v.IsNull() {
-		r.Body = ""
-	} else {
-		r.Body = v.AsString()
-	}
 	return nil
 }
