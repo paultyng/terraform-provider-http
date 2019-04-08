@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	sdk "github.com/hashicorp/terraform-plugin-sdk"
-	"github.com/pkg/errors"
 )
 
 type urlAttribute string
@@ -31,12 +30,14 @@ type dataHTTP struct {
 	Body           string            `tf:"body,computed"`
 }
 
-func (d *dataHTTP) Read(ctx context.Context) ([]sdk.Diagnostic, error) {
+var _ sdk.Reader = &dataHTTP{}
+
+func (d *dataHTTP) Read(ctx context.Context) error {
 	client := d.provider.NewClient()
 
 	req, err := http.NewRequest("GET", string(d.URL), nil)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to create request")
+		return fmt.Errorf("Error creating request: %s", err)
 	}
 
 	req = req.WithContext(ctx)
@@ -52,27 +53,27 @@ func (d *dataHTTP) Read(ctx context.Context) ([]sdk.Diagnostic, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to make request")
+		return fmt.Errorf("Error during making a request: %s", d.URL)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return nil, errors.Errorf("unexpected status code %d", resp.StatusCode)
+		return fmt.Errorf("HTTP request error. Response code: %d", resp.StatusCode)
 	}
 
 	contentType := resp.Header.Get("Content-Type")
 	if contentType == "" || isContentTypeAllowed(contentType) == false {
-		return nil, errors.Errorf("unexpected Content-Type %s", contentType)
+		return fmt.Errorf("Content-Type is not a text type. Got: %s", contentType)
 	}
 
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to read response body")
+		return fmt.Errorf("Error while reading response body. %s", err)
 	}
 
 	d.Body = string(bytes)
 
-	return nil, nil
+	return nil
 }
 
 // This is to prevent potential issues w/ binary files
