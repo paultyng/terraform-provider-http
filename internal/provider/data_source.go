@@ -31,12 +31,12 @@ type dataHTTP struct {
 	Body           string            `tf:"body,computed"`
 }
 
-func (d *dataHTTP) Read(ctx context.Context) error {
+func (d *dataHTTP) Read(ctx context.Context) ([]sdk.Diagnostic, error) {
 	client := d.provider.NewClient()
 
 	req, err := http.NewRequest("GET", string(d.URL), nil)
 	if err != nil {
-		return errors.Wrapf(err, "unable to create request")
+		return nil, errors.Wrapf(err, "unable to create request")
 	}
 
 	req = req.WithContext(ctx)
@@ -52,27 +52,27 @@ func (d *dataHTTP) Read(ctx context.Context) error {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return errors.Wrapf(err, "unable to make request")
+		return nil, errors.Wrapf(err, "unable to make request")
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return errors.Errorf("unexpected status code %d", resp.StatusCode)
+		return nil, errors.Errorf("unexpected status code %d", resp.StatusCode)
 	}
 
 	contentType := resp.Header.Get("Content-Type")
 	if contentType == "" || isContentTypeAllowed(contentType) == false {
-		return errors.Errorf("unexpected Content-Type %s", contentType)
+		return nil, errors.Errorf("unexpected Content-Type %s", contentType)
 	}
 
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return errors.Wrapf(err, "unable to read response body")
+		return nil, errors.Wrapf(err, "unable to read response body")
 	}
 
 	d.Body = string(bytes)
 
-	return nil
+	return nil, nil
 }
 
 // This is to prevent potential issues w/ binary files

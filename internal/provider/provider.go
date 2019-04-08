@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/hashicorp/terraform/helper/logging"
@@ -22,4 +23,14 @@ func (p *provider) NewClient() *http.Client {
 
 func New() sdk.Provider {
 	return &provider{}
+}
+
+func (p *provider) Configure(ctx context.Context, tfVersion string) ([]sdk.Diagnostic, error) {
+	//nothing to do here
+	return nil, nil
+}
+
+func (p *provider) Stop(ctx context.Context) (string, error) {
+	//nothing to do here
+	return "", nil
 }

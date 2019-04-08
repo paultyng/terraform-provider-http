@@ -31,6 +31,19 @@ func (r *provider) PopulateConfig(conf cty.Value) error {
 	}
 	return nil
 }
+func (r *provider) SaveState() (cty.Value, error) {
+	state := map[string]cty.Value{}
+	if r.RequestHeaders == nil {
+		state["request_headers"] = cty.MapValEmpty(cty.String)
+	} else {
+		values := map[string]cty.Value{}
+		for k, v := range r.RequestHeaders {
+			values[k] = cty.StringVal(v)
+		}
+		state["request_headers"] = cty.MapVal(values)
+	}
+	return cty.ObjectVal(state), nil
+}
 func (p *provider) DataSourceFactory(typeName string) terraformpluginsdk.DataSource {
 	switch typeName {
 	case "http":

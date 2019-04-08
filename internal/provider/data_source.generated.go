@@ -48,3 +48,18 @@ func (r *dataHTTP) PopulateConfig(conf cty.Value) error {
 	}
 	return nil
 }
+func (r *dataHTTP) SaveState() (cty.Value, error) {
+	state := map[string]cty.Value{}
+	state["url"] = cty.StringVal(string(r.URL))
+	if r.RequestHeaders == nil {
+		state["request_headers"] = cty.MapValEmpty(cty.String)
+	} else {
+		values := map[string]cty.Value{}
+		for k, v := range r.RequestHeaders {
+			values[k] = cty.StringVal(v)
+		}
+		state["request_headers"] = cty.MapVal(values)
+	}
+	state["body"] = cty.StringVal(r.Body)
+	return cty.ObjectVal(state), nil
+}
