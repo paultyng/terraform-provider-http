@@ -25,12 +25,12 @@ func New() sdk.Provider {
 	return &provider{}
 }
 
-func (p *provider) Configure(ctx context.Context, tfVersion string) ([]sdk.Diagnostic, error) {
+func (p *provider) Configure(ctx context.Context, tfVersion string) error {
 	//nothing to do here
-	return nil, nil
+	return nil
 }
 
-func (p *provider) Stop(ctx context.Context) (string, error) {
+func (p *provider) Stop(ctx context.Context) error {
 	//nothing to do here
-	return "", nil
+	return nil
 }

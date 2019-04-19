@@ -5,23 +5,27 @@ package provider
 import (
 	terraformpluginsdk "github.com/hashicorp/terraform-plugin-sdk"
 	cty "github.com/zclconf/go-cty/cty"
+	gocty "github.com/zclconf/go-cty/cty/gocty"
 )
 
 func (r *dataHTTP) Schema() terraformpluginsdk.Schema {
 	return terraformpluginsdk.Schema{Block: terraformpluginsdk.Block{Attributes: []terraformpluginsdk.Attribute{terraformpluginsdk.Attribute{
 		Computed: false,
+		ForceNew: false,
 		Name:     "url",
 		Optional: false,
 		Required: true,
 		Type:     cty.String,
 	}, terraformpluginsdk.Attribute{
 		Computed: false,
+		ForceNew: false,
 		Name:     "request_headers",
 		Optional: true,
 		Required: false,
 		Type:     cty.Map(cty.String),
 	}, terraformpluginsdk.Attribute{
 		Computed: true,
+		ForceNew: false,
 		Name:     "body",
 		Optional: false,
 		Required: false,
@@ -29,37 +33,56 @@ func (r *dataHTTP) Schema() terraformpluginsdk.Schema {
 	}}}}
 }
 func (r *dataHTTP) PopulateConfig(conf cty.Value) error {
+	var err error
+	_ = err
 	var v cty.Value
 	v = conf.GetAttr("url")
-	if v.IsNull() {
-		r.URL = ""
-	} else {
-		r.URL = urlAttribute(v.AsString())
+	if !v.IsNull() && v.IsKnown() {
+		var fc string
+		err = gocty.FromCtyValue(v, &fc)
+		if err != nil {
+			return err
+		}
+		r.URL = urlAttribute(fc)
 	}
 	v = conf.GetAttr("request_headers")
-	if v.IsNull() {
-		r.RequestHeaders = nil
-	} else {
+	if !v.IsNull() && v.IsKnown() {
 		vm := v.AsValueMap()
 		r.RequestHeaders = make(map[string]string, len(vm))
 		for k, vmv := range vm {
-			r.RequestHeaders[k] = vmv.AsString()
+			var fc string
+			err = gocty.FromCtyValue(vmv, &fc)
+			if err != nil {
+				return err
+			}
+			r.RequestHeaders[k] = fc
 		}
 	}
 	return nil
 }
 func (r *dataHTTP) SaveState() (cty.Value, error) {
+	var err error
+	_ = err
 	state := map[string]cty.Value{}
-	state["url"] = cty.StringVal(string(r.URL))
+	state["url"], err = gocty.ToCtyValue(r.URL, cty.String)
+	if err != nil {
+		return cty.NilVal, err
+	}
 	if r.RequestHeaders == nil {
 		state["request_headers"] = cty.MapValEmpty(cty.String)
 	} else {
 		values := map[string]cty.Value{}
 		for k, v := range r.RequestHeaders {
-			values[k] = cty.StringVal(v)
+			values[k], err = gocty.ToCtyValue(v, cty.String)
+			if err != nil {
+				return cty.NilVal, err
+			}
 		}
 		state["request_headers"] = cty.MapVal(values)
 	}
-	state["body"] = cty.StringVal(r.Body)
+	state["body"], err = gocty.ToCtyValue(r.Body, cty.String)
+	if err != nil {
+		return cty.NilVal, err
+	}
 	return cty.ObjectVal(state), nil
 }

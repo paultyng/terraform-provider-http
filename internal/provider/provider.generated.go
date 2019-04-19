@@ -6,11 +6,13 @@ import (
 	"fmt"
 	terraformpluginsdk "github.com/hashicorp/terraform-plugin-sdk"
 	cty "github.com/zclconf/go-cty/cty"
+	gocty "github.com/zclconf/go-cty/cty/gocty"
 )
 
 func (r *provider) Schema() terraformpluginsdk.Schema {
 	return terraformpluginsdk.Schema{Block: terraformpluginsdk.Block{Attributes: []terraformpluginsdk.Attribute{terraformpluginsdk.Attribute{
 		Computed: false,
+		ForceNew: false,
 		Name:     "request_headers",
 		Optional: true,
 		Required: false,
@@ -18,27 +20,37 @@ func (r *provider) Schema() terraformpluginsdk.Schema {
 	}}}}
 }
 func (r *provider) PopulateConfig(conf cty.Value) error {
+	var err error
+	_ = err
 	var v cty.Value
 	v = conf.GetAttr("request_headers")
-	if v.IsNull() {
-		r.RequestHeaders = nil
-	} else {
+	if !v.IsNull() && v.IsKnown() {
 		vm := v.AsValueMap()
 		r.RequestHeaders = make(map[string]string, len(vm))
 		for k, vmv := range vm {
-			r.RequestHeaders[k] = vmv.AsString()
+			var fc string
+			err = gocty.FromCtyValue(vmv, &fc)
+			if err != nil {
+				return err
+			}
+			r.RequestHeaders[k] = fc
 		}
 	}
 	return nil
 }
 func (r *provider) SaveState() (cty.Value, error) {
+	var err error
+	_ = err
 	state := map[string]cty.Value{}
 	if r.RequestHeaders == nil {
 		state["request_headers"] = cty.MapValEmpty(cty.String)
 	} else {
 		values := map[string]cty.Value{}
 		for k, v := range r.RequestHeaders {
-			values[k] = cty.StringVal(v)
+			values[k], err = gocty.ToCtyValue(v, cty.String)
+			if err != nil {
+				return cty.NilVal, err
+			}
 		}
 		state["request_headers"] = cty.MapVal(values)
 	}

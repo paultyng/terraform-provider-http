@@ -30,8 +30,6 @@ type dataHTTP struct {
 	Body           string            `tf:"body,computed"`
 }
 
-var _ sdk.Reader = &dataHTTP{}
-
 func (d *dataHTTP) Read(ctx context.Context) error {
 	client := d.provider.NewClient()
 
