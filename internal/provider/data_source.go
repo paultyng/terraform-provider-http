@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	sdk "github.com/hashicorp/terraform-plugin-sdk"
+	cty "github.com/zclconf/go-cty/cty"
 )
 
 type urlAttribute string
@@ -107,7 +108,7 @@ func (r *dataHTTP) Validate() ([]sdk.Diagnostic, error) {
 	err = r.URL.Validate()
 	if err != nil {
 		diags = append(diags, sdk.Diagnostic{
-			Path:     sdk.Path(sdk.NameStep("url")),
+			Path:     cty.Path{}.GetAttr("url"),
 			Severity: sdk.SeverityError,
 			Summary:  err.Error(),
 		})

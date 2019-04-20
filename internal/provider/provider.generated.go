@@ -38,7 +38,7 @@ func (r *provider) PopulateConfig(conf cty.Value) error {
 	}
 	return nil
 }
-func (r *provider) SaveState() (cty.Value, error) {
+func (r *provider) SaveState(plan bool) (cty.Value, error) {
 	var err error
 	_ = err
 	state := map[string]cty.Value{}
