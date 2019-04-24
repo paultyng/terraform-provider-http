@@ -58,9 +58,18 @@ func (r *dataHTTP) PopulateConfig(conf cty.Value) error {
 			r.RequestHeaders[k] = fc
 		}
 	}
+	v = conf.GetAttr("body")
+	if !v.IsNull() && v.IsKnown() {
+		var fc string
+		err = gocty.FromCtyValue(v, &fc)
+		if err != nil {
+			return err
+		}
+		r.Body = fc
+	}
 	return nil
 }
-func (r *dataHTTP) SaveState(plan bool) (cty.Value, error) {
+func (r *dataHTTP) SaveState() (cty.Value, error) {
 	var err error
 	_ = err
 	state := map[string]cty.Value{}
@@ -80,13 +89,9 @@ func (r *dataHTTP) SaveState(plan bool) (cty.Value, error) {
 		}
 		state["request_headers"] = cty.MapVal(values)
 	}
-	if plan {
-		state["body"] = cty.UnknownVal(cty.String)
-	} else {
-		state["body"], err = gocty.ToCtyValue(r.Body, cty.String)
-		if err != nil {
-			return cty.NilVal, err
-		}
+	state["body"], err = gocty.ToCtyValue(r.Body, cty.String)
+	if err != nil {
+		return cty.NilVal, err
 	}
 	return cty.ObjectVal(state), nil
 }
