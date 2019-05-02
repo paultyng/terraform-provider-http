@@ -4,94 +4,88 @@ package provider
 
 import (
 	terraformpluginsdk "github.com/hashicorp/terraform-plugin-sdk"
+	errors "github.com/pkg/errors"
 	cty "github.com/zclconf/go-cty/cty"
 	gocty "github.com/zclconf/go-cty/cty/gocty"
 )
 
 func (r *dataHTTP) Schema() terraformpluginsdk.Schema {
 	return terraformpluginsdk.Schema{Block: terraformpluginsdk.Block{Attributes: []terraformpluginsdk.Attribute{terraformpluginsdk.Attribute{
-		Computed: false,
-		ForceNew: false,
-		Name:     "url",
-		Optional: false,
-		Required: true,
-		Type:     cty.String,
+		Computed:  false,
+		ForceNew:  false,
+		Name:      "url",
+		Optional:  false,
+		Required:  true,
+		Sensitive: false,
+		Type:      cty.String,
 	}, terraformpluginsdk.Attribute{
-		Computed: false,
-		ForceNew: false,
-		Name:     "request_headers",
-		Optional: true,
-		Required: false,
-		Type:     cty.Map(cty.String),
+		Computed:  false,
+		ForceNew:  false,
+		Name:      "request_headers",
+		Optional:  true,
+		Required:  false,
+		Sensitive: false,
+		Type:      cty.Map(cty.String),
 	}, terraformpluginsdk.Attribute{
-		Computed: true,
-		ForceNew: false,
-		Name:     "body",
-		Optional: false,
-		Required: false,
-		Type:     cty.String,
+		Computed:  true,
+		ForceNew:  false,
+		Name:      "body",
+		Optional:  false,
+		Required:  false,
+		Sensitive: false,
+		Type:      cty.String,
 	}}}}
 }
-func (r *dataHTTP) PopulateConfig(conf cty.Value) error {
+func (r *dataHTTP) UnmarshalState(conf cty.Value) error {
 	var err error
 	_ = err
-	var v cty.Value
-	v = conf.GetAttr("url")
-	if !v.IsNull() && v.IsKnown() {
-		var fc string
-		err = gocty.FromCtyValue(v, &fc)
-		if err != nil {
-			return err
-		}
-		r.URL = urlAttribute(fc)
-	}
-	v = conf.GetAttr("request_headers")
-	if !v.IsNull() && v.IsKnown() {
-		vm := v.AsValueMap()
-		r.RequestHeaders = make(map[string]string, len(vm))
-		for k, vmv := range vm {
-			var fc string
-			err = gocty.FromCtyValue(vmv, &fc)
+	if !conf.IsNull() && conf.IsKnown() {
+		if !conf.GetAttr("url").IsNull() && conf.GetAttr("url").IsKnown() {
+			err = gocty.FromCtyValue(conf.GetAttr("url"), &r.URL)
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
-			r.RequestHeaders[k] = fc
 		}
-	}
-	v = conf.GetAttr("body")
-	if !v.IsNull() && v.IsKnown() {
-		var fc string
-		err = gocty.FromCtyValue(v, &fc)
-		if err != nil {
-			return err
+		if !conf.GetAttr("request_headers").IsNull() && conf.GetAttr("request_headers").IsKnown() {
+			err = gocty.FromCtyValue(conf.GetAttr("request_headers"), &r.RequestHeaders)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 		}
-		r.Body = fc
+		if !conf.GetAttr("body").IsNull() && conf.GetAttr("body").IsKnown() {
+			err = gocty.FromCtyValue(conf.GetAttr("body"), &r.Body)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
 	}
 	return nil
 }
-func (r *dataHTTP) SaveState() (cty.Value, error) {
+func (r *dataHTTP) MarshalState() (cty.Value, error) {
 	var err error
 	_ = err
-	state := map[string]cty.Value{}
-	state["url"], err = gocty.ToCtyValue(r.URL, cty.String)
-	if err != nil {
-		return cty.NilVal, err
-	}
-	if r.RequestHeaders == nil {
-		state["request_headers"] = cty.MapValEmpty(cty.String)
-	} else {
-		values := map[string]cty.Value{}
-		for k, v := range r.RequestHeaders {
-			values[k], err = gocty.ToCtyValue(v, cty.String)
+	var state cty.Value
+	{
+		state1 := map[string]cty.Value{}
+		{
+			state1["url"], err = gocty.ToCtyValue(r.URL, cty.String)
 			if err != nil {
-				return cty.NilVal, err
+				return cty.NilVal, errors.WithStack(err)
 			}
 		}
-		state["request_headers"] = cty.MapVal(values)
+		{
+			state1["request_headers"], err = gocty.ToCtyValue(r.RequestHeaders, cty.Map(cty.String))
+			if err != nil {
+				return cty.NilVal, errors.WithStack(err)
+			}
+		}
+		{
+			state1["body"], err = gocty.ToCtyValue(r.Body, cty.String)
+			if err != nil {
+				return cty.NilVal, errors.WithStack(err)
+			}
+		}
+		state = cty.ObjectVal(state1)
 	}
-	state["body"], err = gocty.ToCtyValue(r.Body, cty.String)
-	if err != nil {
-		return cty.NilVal, err
-	}
-	return cty.ObjectVal(state), nil
+	return state, nil
 }

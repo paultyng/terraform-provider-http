@@ -108,7 +108,7 @@ func (r *dataHTTP) Validate() ([]sdk.Diagnostic, error) {
 	err = r.URL.Validate()
 	if err != nil {
 		diags = append(diags, sdk.Diagnostic{
-			Path:     cty.Path{}.GetAttr("url"),
+			Path:     cty.GetAttrPath("url"),
 			Severity: sdk.SeverityError,
 			Summary:  err.Error(),
 		})

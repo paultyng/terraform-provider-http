@@ -5,56 +5,50 @@ package provider
 import (
 	"fmt"
 	terraformpluginsdk "github.com/hashicorp/terraform-plugin-sdk"
+	errors "github.com/pkg/errors"
 	cty "github.com/zclconf/go-cty/cty"
 	gocty "github.com/zclconf/go-cty/cty/gocty"
 )
 
 func (r *provider) Schema() terraformpluginsdk.Schema {
 	return terraformpluginsdk.Schema{Block: terraformpluginsdk.Block{Attributes: []terraformpluginsdk.Attribute{terraformpluginsdk.Attribute{
-		Computed: false,
-		ForceNew: false,
-		Name:     "request_headers",
-		Optional: true,
-		Required: false,
-		Type:     cty.Map(cty.String),
+		Computed:  false,
+		ForceNew:  false,
+		Name:      "request_headers",
+		Optional:  true,
+		Required:  false,
+		Sensitive: false,
+		Type:      cty.Map(cty.String),
 	}}}}
 }
-func (r *provider) PopulateConfig(conf cty.Value) error {
+func (r *provider) UnmarshalState(conf cty.Value) error {
 	var err error
 	_ = err
-	var v cty.Value
-	v = conf.GetAttr("request_headers")
-	if !v.IsNull() && v.IsKnown() {
-		vm := v.AsValueMap()
-		r.RequestHeaders = make(map[string]string, len(vm))
-		for k, vmv := range vm {
-			var fc string
-			err = gocty.FromCtyValue(vmv, &fc)
+	if !conf.IsNull() && conf.IsKnown() {
+		if !conf.GetAttr("request_headers").IsNull() && conf.GetAttr("request_headers").IsKnown() {
+			err = gocty.FromCtyValue(conf.GetAttr("request_headers"), &r.RequestHeaders)
 			if err != nil {
-				return err
+				return errors.WithStack(err)
 			}
-			r.RequestHeaders[k] = fc
 		}
 	}
 	return nil
 }
-func (r *provider) SaveState() (cty.Value, error) {
+func (r *provider) MarshalState() (cty.Value, error) {
 	var err error
 	_ = err
-	state := map[string]cty.Value{}
-	if r.RequestHeaders == nil {
-		state["request_headers"] = cty.MapValEmpty(cty.String)
-	} else {
-		values := map[string]cty.Value{}
-		for k, v := range r.RequestHeaders {
-			values[k], err = gocty.ToCtyValue(v, cty.String)
+	var state cty.Value
+	{
+		state1 := map[string]cty.Value{}
+		{
+			state1["request_headers"], err = gocty.ToCtyValue(r.RequestHeaders, cty.Map(cty.String))
 			if err != nil {
-				return cty.NilVal, err
+				return cty.NilVal, errors.WithStack(err)
 			}
 		}
-		state["request_headers"] = cty.MapVal(values)
+		state = cty.ObjectVal(state1)
 	}
-	return cty.ObjectVal(state), nil
+	return state, nil
 }
 func (p *provider) DataSourceFactory(typeName string) terraformpluginsdk.DataSource {
 	switch typeName {
